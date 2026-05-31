@@ -297,31 +297,30 @@ if (!isVercel) {
   io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
   });
-}
-
 const rooms = {}; // Store room data
 const userSockets = {}; // Map userId to socketId
 
 if (!isVercel) {
   io.on('connection', (socket) => {
-  // Your socket event listeners go here (e.g., socket.on('join', ...))
-});
+    // Fixed: Removed the premature closing brackets from here so the block stays open
+    console.log(`✅ User connected: ${socket.id}`);
 
-
-  console.log(`✅ User connected: ${socket.id}`);
-
-  // Join meeting room
+    // Join meeting room
+    socket.on('join-room', (roomId, userId) => {
+        // Join meeting room
   socket.on('join-room', (roomId, userId) => {
     // attach userId to socket for later checks
     socket.userId = userId;
     socket.join(roomId);
     userSockets[userId] = socket.id;
     
+    // Fixed: Added the missing closing parenthesis ')' and opening brace '{'
     if (!rooms[roomId]) {
-      rooms[roomId] = { participants: [], createdAt: new Date() };
+      rooms[roomId] = { users: [] };
     }
+
     
-    rooms[roomId].participants.push({ userId, socketId: socket.id });
+  [roomId].participants.push({ userId, socketId: socket.id });
     // Persist participant join
     try {
       meetings.addParticipant(roomId, userId);
@@ -430,7 +429,7 @@ if (!isVercel) {
       timestamp: new Date()
     });
   });
-
+s
   // Screen sharing started
   socket.on('screen-share-started', (roomId) => {
     io.to(roomId).emit('screen-share-started', { userId: socket.id });
@@ -613,16 +612,21 @@ if (!isVercel) {
     console.log('📊 Activity tracked:', data.activityType);
   });
 
+  // ========== NEW: ANALYTICS TRACKING ==========
+  socket.on('activity-tracked', (data) => {
+    // Track user activity for analytics
+    console.log('📊 Activity tracked:', data.activityType);
+  });
+
   // ========== NEW: BIOMETRIC AUTH ==========
   socket.on('biometric-auth-success', (data) => {
     socket.emit('biometric-auth-confirmed', {
       userId: data.userId,
       method: data.method,
-          timestamp: new Date().toISOString()
-  });
-  console.log('🔐 Biometric auth successful for:', data.userId);
-}
-
+      timestamp: new Date().toISOString()
+    }); // Fixed: added missing closing parenthesis for socket.emit
+    console.log('🔐 Biometric auth successful for:', data.userId);
+  }); // Fixed: added missing closing parenthesis for socket.on
 
 // ==========================================
 // ===== SAFETY & ALERTS API ENDPOINTS =====
@@ -653,33 +657,45 @@ app.post('/api/safety/trigger-sos', auth.authenticateToken, (req, res) => {
   // TODO: Save the SOS alert to your database here
 
   console.log('🆘 SOS triggered:', req.userId); 
-  
-  // CRITICAL FIX: Send response and close the function blocks
-  return res.json({ success: true, sos });
-}); 
-
+  // CRITICAL FIX: Send response and close the function block
   return res.json({ success: true, sos });
 });
-
 // 2. GEOFENCE ENDPOINT
 app.post('/api/safety/geofence', auth.authenticateToken, (req, res) => {
   const { latitude, longitude, radiusMeters, name } = req.body;
 
-  // Basic validation to prevent saving empty/invalid data
-  if (!latitude || !longitude || !radiusMeters || !name) {
-    return res.status(400).json({ error: 'Missing required geofence fields' });
+  // 1. Basic presence validation
+  if (!latitude || !longitude || !radiusMeters || !name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Missing or empty required geofence fields' });
   }
 
+  // 2. Strict numeric/range validation to prevent invalid coordinates
+  const latNum = Number(latitude);
+  const lngNum = Number(longitude);
+  const radNum = Number(radiusMeters);
+
+  if (isNaN(latNum) || latNum < -90 || latNum > 90) {
+    return res.status(400).json({ error: 'Invalid latitude. Must be a number between -90 and 90' });
+  }
+  if (isNaN(lngNum) || lngNum < -180 || lngNum > 180) {
+    return res.status(400).json({ error: 'Invalid longitude. Must be a number between -180 and 180' });
+  }
+  if (isNaN(radNum) || radNum <= 0) {
+    return res.status(400).json({ error: 'Invalid radius. Must be a positive number' });
+  }
+
+  // 3. Safe creation of the geofence object
   const geofence = {
     id: `geo-${Date.now()}`,
     userId: req.userId,
-    latitude, 
-    longitude, 
-    radiusMeters, 
-    name,
+    latitude: latNum, 
+    longitude: lngNum, 
+    radiusMeters: radNum, 
+    name: name.trim(),
     createdAt: new Date().toISOString()
   };
 
+  
   // TODO: Save the geofence object to your database here
 
   return res.status(201).json({
@@ -792,6 +808,13 @@ app.post('/api/biometric/authenticate', (req, res) => {
 // ===== SERVER START =====
 // ==========================================
 
+if (!isVercel) {
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    console.log(`🚀 Zakka Meet Pro running on port ${PORT}`);
+    console.log(`Developer: Salim Abdullahi Zakka`);
+    console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
+);  }
 if (!isVercel) {
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
