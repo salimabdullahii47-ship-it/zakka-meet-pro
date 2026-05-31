@@ -296,50 +296,46 @@ if (!isVercel) {
   server = http.createServer(app);
   io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
-  });
+});
 const rooms = {}; // Store room data
 const userSockets = {}; // Map userId to socketId
 
 if (!isVercel) {
   io.on('connection', (socket) => {
-    // Fixed: Removed the premature closing brackets from here so the block stays open
     console.log(`✅ User connected: ${socket.id}`);
 
     // Join meeting room
     socket.on('join-room', (roomId, userId) => {
-        // Join meeting room
-  socket.on('join-room', (roomId, userId) => {
-    // attach userId to socket for later checks
-    socket.userId = userId;
-    socket.join(roomId);
-    userSockets[userId] = socket.id;
-    
-    // Fixed: Added the missing closing parenthesis ')' and opening brace '{'
-    if (!rooms[roomId]) {
-      rooms[roomId] = { users: [] };
-    }
+      // attach userId to socket for later checks
+      socket.userId = userId;
+      socket.join(roomId);
+      userSockets[userId] = socket.id;
+      
+      if (!rooms[roomId]) {
+        rooms[roomId] = { users: [], participants: [] }; // Added participants array initialization safely
+      }
 
-    
-  [roomId].participants.push({ userId, socketId: socket.id });
-    // Persist participant join
-    try {
-      meetings.addParticipant(roomId, userId);
-    } catch (err) {
-      console.error('Error persisting participant:', err);
-    }
-    
-    // Send a private welcome to the joining user with meeting info and preferences
-    try {
-      const meeting = meetings.getMeeting(roomId);
-      const participants = meetings.getActiveParticipants(roomId);
-      const user = auth.getUserById(userId) || { id: userId };
-      const prefs = auth.getUserPreferences(userId) || {};
+      // Fixed: Added the missing "rooms" variable reference here
+      if (!rooms[roomId].participants) rooms[roomId].participants = [];
+      rooms[roomId].participants.push({ userId, socketId: socket.id });
+      
+      // Persist participant join
+      try {
+        meetings.addParticipant(roomId, userId);
+      } catch (err) {
+        console.error('Error persisting participant:', err);
+      }
+      
+      // Send a private welcome to the joining user with meeting info and preferences
+      try {
+        const meeting = meetings.getMeeting(roomId);
+        const participants = meetings.getActiveParticipants(roomId);
+        const user = auth.getUserById(userId) || { id: userId };
+        const prefs = auth.getUserPreferences(userId) || {};
 
-      socket.emit('welcome', {
-        message: `Welcome ${user.displayName || user.username || userId} to ${meeting ? meeting.name : 'the meeting'}`,
-        meeting: meeting || null,
-        participants,
-        preferences: prefs
+        socket.emit('welcome', {
+          message: `Welcome ${user.displayName || user.username || userId} to ${meeting ? meeting.name : 'the meeting'}`,
+          meeting: meeting || null,
       });
     } catch (err) {
       console.error('Error sending welcome data:', err);
@@ -786,35 +782,15 @@ app.post('/api/biometric/authenticate', (req, res) => {
 // ==========================================
 // ===== CATCH-ALL FOR FRONTEND ROUTING =====
 // ==========================================
-
-app.get('*', (req, res) => {
+aopp.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 module.exports = app;
 
-// ========== BIOMETRIC API ==========
-app.post('/api/biometric/authenticate', (req, res) => {
-  const { method, data } = req.body;
-  return res.json({
-    success: true,
-    authenticated: true,
-    method: method,
-    timestamp: new Date().toISOString()
-  });
-}); // Clean closing brace for the biometric endpoint
-
 // ==========================================
 // ===== SERVER START =====
 // ==========================================
-
-if (!isVercel) {
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => {
-    console.log(`🚀 Zakka Meet Pro running on port ${PORT}`);
-    console.log(`Developer: Salim Abdullahi Zakka`);
-    console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
-);  }
 if (!isVercel) {
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
@@ -823,3 +799,20 @@ if (!isVercel) {
     console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
   });
 }
+if (!isVercel) {
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    if (!isVercel) {
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    console.log(`🚀 Zakka Meet Pro running on port ${PORT}`);
+    console.log(`Developer: Salim Abdullahi Zakka`);
+    console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
+  });
+}
+
+  });
+}
+
+
+
