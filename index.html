@@ -737,47 +737,66 @@
         function generateClientId() {
             return 'c-' + Math.random().toString(36).substring(2, 10);
         }
+function safeGetLocalStorage(key, defaultValue) {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem(key) || defaultValue;
+    }
+    return defaultValue;
+}
 
-        function getLocalUser() {
-            let user = JSON.parse(localStorage.getItem('zakka_user') || 'null');
-            if (!user) {
-                user = { id: generateClientId(), displayName: `Guest-${Math.random().toString(36).substring(2,6)}` };
-                localStorage.setItem('zakka_user', JSON.stringify(user));
-            }
-            return user;
-        }
+function safeSetLocalStorage(key, value) {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(key, value);
+    }
+}
 
-        function getRecordingHistory() {
-            try {
-                return JSON.parse(localStorage.getItem('zakka_record_history') || '[]');
-            } catch (e) {
-                return [];
-            }
-        }
+function getLocalUser() {
+    let user = JSON.parse(safeGetLocalStorage('zakka_user', 'null'));
+    if (!user) {
+        user = { id: generateClientId(), displayName: `Guest-${Math.random().toString(36).substring(2,6)}` };
+        safeSetLocalStorage('zakka_user', JSON.stringify(user));
+    }
+    return user;
+}
 
-        function saveRecordingHistory(history) {
-            localStorage.setItem('zakka_record_history', JSON.stringify(history));
-        }
+function getRecordingHistory() {
+    try {
+        return JSON.parse(safeGetLocalStorage('zakka_record_history', '[]'));
+    } catch (e) {
+        return [];
+    }
+}
 
-        function addRecordingSession(session) {
-            const history = getRecordingHistory();
-            history.push(session);
-            saveRecordingHistory(history);
-        }
+function saveRecordingHistory(history) {
+    safeSetLocalStorage('zakka_record_history', JSON.stringify(history));
+}
 
-        function updateLastRecordingSession(update) {
-            const history = getRecordingHistory();
-            if (!history.length) return;
-            const last = history[history.length - 1];
-            Object.assign(last, update);
-            saveRecordingHistory(history);
-        }
+function addRecordingSession(session) {
+    const history = getRecordingHistory();
+    history.push(session);
+    saveRecordingHistory(history);
+}
 
-        function formatTimestamp(ts) {
-            return new Date(ts).toLocaleString();
-        }
+function updateLastRecordingSession(update) {
+    const history = getRecordingHistory();
+    if (!history.length) return;
+    const last = history[history.length - 1];
+    Object.assign(last, update);
+    saveRecordingHistory(history);
+}
 
-        function setRecordStatusMessage(text) {
+function formatTimestamp(ts) {
+    return new Date(ts).toLocaleString();
+}
+
+function setRecordStatusMessage(text) {
+
+        
+
+
+
+
+
             if (recordStateInfo) recordStateInfo.innerText = text;
         }
 

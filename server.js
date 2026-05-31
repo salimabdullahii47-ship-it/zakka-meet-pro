@@ -304,6 +304,10 @@ const userSockets = {}; // Map userId to socketId
 
 if (!isVercel) {
   io.on('connection', (socket) => {
+  // Your socket event listeners go here (e.g., socket.on('join', ...))
+});
+
+
   console.log(`✅ User connected: ${socket.id}`);
 
   // Join meeting room
@@ -623,34 +627,67 @@ if (!isVercel) {
 // ==========================================
 // ===== SAFETY & ALERTS API ENDPOINTS =====
 // ==========================================
+// ==========================================
+// API ENDPOINTS =====
+// ==========================================
 
+// 1. TRIGGER SOS ENDPOINT
 app.post('/api/safety/trigger-sos', auth.authenticateToken, (req, res) => {
   const { reason, emergencyType, location } = req.body;
+
+  // Basic validation for SOS location data
+  if (!location) {
+    return res.status(400).json({ success: false, error: 'Location data is required for SOS' });
+  }
+
   const sos = {
     id: `sos-${Date.now()}`,
     userId: req.userId,
-    reason: reason,
+    reason: reason || 'No reason provided',
     emergencyType: emergencyType || 'general',
     location: location,
     timestamp: new Date().toISOString(),
     status: 'active'
   };
 
-  res.json({ success: true, sos });
-  console.log('🆘 SOS triggered:', req.userId);
+  // TODO: Save the SOS alert to your database here
+
+  console.log('🆘 SOS triggered:', req.userId); 
+  
+  // CRITICAL FIX: Send response and close the function blocks
+  return res.json({ success: true, sos });
+}); 
+
+  return res.json({ success: true, sos });
 });
 
+// 2. GEOFENCE ENDPOINT
 app.post('/api/safety/geofence', auth.authenticateToken, (req, res) => {
   const { latitude, longitude, radiusMeters, name } = req.body;
+
+  // Basic validation to prevent saving empty/invalid data
+  if (!latitude || !longitude || !radiusMeters || !name) {
+    return res.status(400).json({ error: 'Missing required geofence fields' });
+  }
+
   const geofence = {
     id: `geo-${Date.now()}`,
     userId: req.userId,
-    latitude, longitude, radiusMeters, name,
+    latitude, 
+    longitude, 
+    radiusMeters, 
+    name,
     createdAt: new Date().toISOString()
   };
 
-  res.json({ success: true, geofence });
+  // TODO: Save the geofence object to your database here
+
+  return res.status(201).json({
+    message: 'Geofence created successfully',
+    geofence
+  });
 });
+
 
 // ========== ANALYTICS API ENDPOINTS =====
 app.get('/api/analytics/user/:userId', auth.authenticateToken, (req, res) => {
@@ -700,7 +737,7 @@ app.post('/api/sectors/education/lesson-plan', auth.authenticateToken, (req, res
     createdAt: new Date().toISOString()
   };
 
-  res.json({ success: true, lessonPlan });
+    res.json({ success: true, lessonPlan });
 });
 
 app.get('/api/sectors/finance/market-analysis', auth.authenticateToken, (req, res) => {
@@ -720,13 +757,15 @@ app.get('/api/sectors/finance/market-analysis', auth.authenticateToken, (req, re
 // ========== BIOMETRIC API ==========
 app.post('/api/biometric/authenticate', (req, res) => {
   const { method, data } = req.body;
-  res.json({
+  
+  // CRITICAL FIX: The response block now closes properly below
+  return res.json({
     success: true,
     authenticated: true,
     method: method,
     timestamp: new Date().toISOString()
   });
-});
+}); 
 
 // ==========================================
 // ===== CATCH-ALL FOR FRONTEND ROUTING =====
@@ -737,6 +776,17 @@ app.get('*', (req, res) => {
 });
 
 module.exports = app;
+
+// ========== BIOMETRIC API ==========
+app.post('/api/biometric/authenticate', (req, res) => {
+  const { method, data } = req.body;
+  return res.json({
+    success: true,
+    authenticated: true,
+    method: method,
+    timestamp: new Date().toISOString()
+  });
+}); // Clean closing brace for the biometric endpoint
 
 // ==========================================
 // ===== SERVER START =====
