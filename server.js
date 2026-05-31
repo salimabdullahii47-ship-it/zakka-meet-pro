@@ -614,11 +614,11 @@ if (!isVercel) {
     socket.emit('biometric-auth-confirmed', {
       userId: data.userId,
       method: data.method,
-      timestamp: new Date().toISOString()
-    });
-    console.log('🔐 Biometric auth successful for:', data.userId);
+          timestamp: new Date().toISOString()
   });
+  console.log('🔐 Biometric auth successful for:', data.userId);
 }
+
 
 // ==========================================
 // ===== SAFETY & ALERTS API ENDPOINTS =====
