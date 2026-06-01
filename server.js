@@ -296,11 +296,10 @@ if (!isVercel) {
   server = http.createServer(app);
   io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] }
-});
-const rooms = {}; // Store room data
-const userSockets = {}; // Map userId to socketId
+  });
+  const rooms = {}; // Store room data
+  const userSockets = {}; // Map userId to socketId
 
-if (!isVercel) {
   io.on('connection', (socket) => {
     console.log(`✅ User connected: ${socket.id}`);
 
@@ -425,7 +424,7 @@ if (!isVercel) {
       timestamp: new Date()
     });
   });
-s
+
   // Screen sharing started
   socket.on('screen-share-started', (roomId) => {
     io.to(roomId).emit('screen-share-started', { userId: socket.id });
@@ -620,9 +619,12 @@ s
       userId: data.userId,
       method: data.method,
       timestamp: new Date().toISOString()
-    }); // Fixed: added missing closing parenthesis for socket.emit
+    });
     console.log('🔐 Biometric auth successful for:', data.userId);
-  }); // Fixed: added missing closing parenthesis for socket.on
+  });
+
+  });
+}
 
 // ==========================================
 // ===== SAFETY & ALERTS API ENDPOINTS =====
@@ -782,7 +784,7 @@ app.post('/api/biometric/authenticate', (req, res) => {
 // ==========================================
 // ===== CATCH-ALL FOR FRONTEND ROUTING =====
 // ==========================================
-aopp.get('*', (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -797,20 +799,6 @@ if (!isVercel) {
     console.log(`🚀 Zakka Meet Pro running on port ${PORT}`);
     console.log(`Developer: Salim Abdullahi Zakka`);
     console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
-  });
-}
-if (!isVercel) {
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => {
-    if (!isVercel) {
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => {
-    console.log(`🚀 Zakka Meet Pro running on port ${PORT}`);
-    console.log(`Developer: Salim Abdullahi Zakka`);
-    console.log(`Database initialized at: ${path.join(__dirname, 'zakka-meet.db')}`);
-  });
-}
-
   });
 }
 
