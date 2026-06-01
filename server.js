@@ -6,6 +6,16 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 
+// Ensure critical env vars are present. Provide safe fallbacks in development.
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('ERROR: JWT_SECRET is not set. Authentication will not function correctly.\nSet JWT_SECRET in your environment (on Vercel use Project Settings → Environment Variables).');
+  } else {
+    process.env.JWT_SECRET = 'dev_secret_change_me';
+    console.warn('Warning: JWT_SECRET not set. Using a development fallback secret. Do NOT use in production.');
+  }
+}
+
 // Import modules
 const db = require('./db');
 const auth = require('./auth');
@@ -804,3 +814,4 @@ if (!isVercel) {
 
 
 
+ 

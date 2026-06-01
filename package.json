@@ -28,6 +28,7 @@
     "socket.io-client": "^4.8.3",
     "stripe": "^14.10.0",
     "twilio": "^4.19.0",
+    "serverless-http": "^3.0.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
